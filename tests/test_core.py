@@ -5,10 +5,21 @@ import unittest
 import urllib.error
 from pathlib import Path
 from meok_light.core import endpoint_url, load_routes, run, save_receipt
+from scripts.archive_candidate import validate_source
 
 CONFIG = load_routes(Path(__file__).resolve().parents[1] / "configs/routes.json")
 
 class CoreTests(unittest.TestCase):
+    def test_archive_rejects_source_drift_before_upload(self):
+        import hashlib
+        with tempfile.TemporaryDirectory() as folder:
+            source = Path(folder) / "training.py"
+            source.write_bytes(b"original source")
+            pin = hashlib.sha256(source.read_bytes()).hexdigest()
+            validate_source(source, pin)
+            source.write_bytes(b"changed source")
+            with self.assertRaises(ValueError): validate_source(source, pin)
+
     def transport(self, url, payload=None, timeout=90):
         if url.endswith("tags"):
             return {"models": [{"name": CONFIG["routes"]["general"]["model"],
@@ -47,8 +58,20 @@ class CoreTests(unittest.TestCase):
         self.assertEqual(result["receipt"]["status"], "UNREACHABLE")
         self.assertNotIn("credential", json.dumps(result))
 
+    def test_identity_changed_during_generation_discards_answer(self):
+        calls = []
+        def changed(url, payload=None, timeout=90):
+            calls.append(url)
+            response = self.transport(url, payload, timeout)
+            if len(calls) == 3: response["models"][0]["digest"] = "0" * 64
+            return response
+        result = run("hi", "general", CONFIG, transport=changed)
+        self.assertEqual(result["receipt"]["status"], "UNCHECKABLE")
+        self.assertIsNone(result["text"])
+        self.assertIsNone(result["receipt"]["output_sha256"])
+
     def test_endpoint_and_budget_boundaries(self):
-        for url in ("http://example.com", "https://x@y.test", "https://example.com/x", "file:///etc/passwd"):
+        for url in ("http://example.com", "https://x@y.test", "https://example.com/x", "file:///etc/passwd", "https://", "https://example.com:abc"):
             with self.assertRaises(ValueError): endpoint_url(url)
         self.assertEqual(endpoint_url("http://127.0.0.1:11434/"), "http://127.0.0.1:11434")
         for tokens in (0, 513, True):

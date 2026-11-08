@@ -1,0 +1,29 @@
+name: MEOK source checks
+on:
+  pull_request:
+  push:
+    branches: [main, 'codex/**']
+permissions:
+  contents: read
+jobs:
+  runtime:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - run: python3 -m unittest discover -s tests -p test_core.py -v
+      - run: python3 -c "import ast,pathlib; [ast.parse(pathlib.Path(p).read_text()) for p in ('serve/app.py','scripts/archive_candidate.py')]"
+  training-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - run: python3 -m unittest discover -s tests -p 'test_training*.py' -v
+  browser-source:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - run: node --check space/worker.js && node --test tests/browser-routes.test.mjs
+  receipt-storage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - run: node --test tests/receipt-worker.test.mjs

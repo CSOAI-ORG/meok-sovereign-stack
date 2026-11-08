@@ -2,6 +2,7 @@
 import hashlib
 import ipaddress
 import json
+import socket
 import time
 import urllib.error
 import urllib.parse
@@ -13,7 +14,7 @@ from pathlib import Path
 MAX_BYTES = 1_048_576
 SYSTEM = ("You are MEOK, a SOVOS-light assistant. State uncertainty plainly. "
           "Never invent evidence, sources, model capabilities, completed actions or scores. "
-          "You cannot execute tools, approve changes, or certify systems. "
+          "You cannot execute tools, approve changes, or issue legal verdicts. "
           "Distinguish model-generated suggestions from observed facts. ")
 
 def digest(value):
@@ -25,6 +26,8 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
 
 def endpoint_url(base):
     u = urllib.parse.urlsplit(base)
+    if not u.hostname or u.port == 0:
+        raise ValueError("Endpoint requires a hostname and a valid port")
     if u.username or u.password or u.query or u.fragment or u.path not in ("", "/"):
         raise ValueError("Endpoint must be an origin with no credentials, query or path")
     try:
@@ -89,7 +92,8 @@ def run(prompt, specialist, config, endpoint="http://127.0.0.1:11434", transport
         "config_sha256": digest(json.dumps(config, sort_keys=True, separators=(",", ":"))),
         "max_tokens": max_tokens, "generation": {"seed": 42, "temperature": 0, "num_ctx": 2048},
         "quality": "UNMEASURED", "signature": None,
-        "limitations": ["Provider-reported identity; endpoint operator is trusted.",
+        "context_truncation": "UNKNOWN",
+        "limitations": ["Pre/postflight provider-reported identity; not a cryptographic execution binding.",
                          "Prompt profiles are not separately trained OWEM weights.",
                          "Successful inference does not establish answer correctness."],
     }
@@ -113,13 +117,18 @@ def run(prompt, specialist, config, endpoint="http://127.0.0.1:11434", transport
         if not isinstance(output, str) or not output.strip():
             output = None
             raise ValueError("EMPTY_RESPONSE")
+        after = transport(endpoint + "/api/tags", timeout=min(timeout, 10))
+        pins = [m.get("digest") for m in after.get("models", []) if m.get("name") == route["model"]]
+        if pins != [route["digest"]]:
+            raise ValueError("MODEL_IDENTITY_CHANGED_DURING_REQUEST")
         receipt.update(status="RUNTIME_OBSERVED", output_sha256=digest(output),
                        finish_reason=response.get("done_reason"),
+                       prompt_tokens=response.get("prompt_eval_count"),
                        generated_tokens=response.get("eval_count"))
     except (OSError, ValueError, TypeError, KeyError, AttributeError) as exc:
         # Do not persist response bodies, endpoints, credential-bearing errors or prompts.
         receipt["error_type"] = type(exc).__name__
-        if isinstance(exc, (urllib.error.URLError, TimeoutError, ConnectionError)):
+        if isinstance(exc, (urllib.error.URLError, socket.timeout, TimeoutError, ConnectionError)):
             receipt["status"] = "UNREACHABLE"
         output = None
     receipt["duration_ms"] = round((time.monotonic() - started) * 1000)

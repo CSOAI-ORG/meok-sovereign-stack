@@ -2,7 +2,7 @@ import argparse
 import json
 from .core import load_routes, run, save_receipt
 
-parser = argparse.ArgumentParser(description="MEOK SOVOS-light inference; no model downloads")
+parser = argparse.ArgumentParser(description="MEOK light inference; no model downloads")
 parser.add_argument("prompt")
 parser.add_argument("--specialist", default="general")
 parser.add_argument("--config", default="configs/routes.json")

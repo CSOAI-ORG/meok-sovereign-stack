@@ -1,0 +1,12 @@
+{
+  // Example only; release integration must select an existing authorised bucket.
+  "name": "meok-receipt-candidate",
+  "main": "receipt-worker.mjs",
+  "compatibility_date": "2026-11-08",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
+  "preview_urls": false,
+  "observability": { "enabled": true, "head_sampling_rate": 0.1 },
+  "r2_buckets": [{ "binding": "RECEIPTS", "bucket_name": "REPLACE_WITH_EXISTING_BUCKET", "remote": false }]
+  // RECEIPT_TOKEN is a secret binding with at least 32 characters; never put it here.
+}
