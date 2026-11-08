@@ -169,6 +169,7 @@ def verify_smoke(root: Path, contract: dict, max_total_bytes=128 * 1024 * 1024):
             "adapter base/config mismatch")
     return {"schema": "meok.kaggle-artifact-check/1", "status": "ARTIFACTS_VERIFIED",
             "reported_run_status": "COMPLETED", "receipt_sha256": sha(receipt_raw),
+            "receipt_canonical_sha256": sha(canonical(receipt)),
             "data_sha256": sha(data_raw), "contract_sha256": sha(canonical(contract)),
             "source_sha256": contract["source_sha256"], "model": contract["model"],
             "adapter_files": len(seen), "adapter_bytes": total, "signature_verified": False,

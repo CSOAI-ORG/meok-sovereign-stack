@@ -121,3 +121,5 @@ outward gate and sent log. No public Kaggle task is published by this bridge.
 Official platform sources and their current limitations are recorded in
 `kaggle-research.md`. NVIDIA hardware support:
 https://nvidia.github.io/TensorRT-LLM/supported-hardware.html
+
+The subsequent real-export and reload receipt checks are described in `kaggle-reload-receiving.md`. They supersede the earlier remaining-work list only for byte receiving and producer-reported reload; independent quality remains unmeasured.

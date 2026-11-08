@@ -6,6 +6,8 @@ on:
       - 'tests/test_kaggle_artifacts.py'
       - 'tests/test_coverage.py'
       - 'tests/test_nvidia_probe.py'
+      - 'tests/test_kaggle_reload.py'
+      - 'tests/test_reload_cli.py'
       - '.github/workflows/kaggle-bridge-tests.yml'
   push:
     branches: ['codex/meok-kaggle-bridge-*']
