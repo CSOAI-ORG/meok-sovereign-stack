@@ -1,0 +1,8 @@
+# Candidate environment pins; wrapper has not been installed or runtime-tested.
+gradio==5.49.1
+torch==2.9.0
+transformers==4.57.1
+peft==0.17.1
+accelerate==1.11.0
+huggingface-hub==0.36.0
+safetensors==0.6.2

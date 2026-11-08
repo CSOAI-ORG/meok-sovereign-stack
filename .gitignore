@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.DS_Store
+.venv/
+.env
+run-receipts/
+adapter-output/
+*.safetensors
+*.gguf
+*.bin
