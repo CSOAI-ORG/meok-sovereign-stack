@@ -1,0 +1,25 @@
+name: Kaggle bridge tests
+on:
+  pull_request:
+    paths:
+      - 'kaggle_bridge/**'
+      - 'tests/test_kaggle_artifacts.py'
+      - 'tests/test_coverage.py'
+      - 'tests/test_nvidia_probe.py'
+      - 'tests/test_kaggle_reload.py'
+      - 'tests/test_reload_cli.py'
+      - '.github/workflows/kaggle-bridge-tests.yml'
+  push:
+    branches: ['codex/meok-kaggle-bridge-*']
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Offline artifact and coverage controls
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: python3 -m unittest discover -s tests -p 'test_*.py' -v
